@@ -17,7 +17,7 @@
 
 #include "ofMain.h"
 #include "analyse.h"
-#include "server.h"
+#include "server/server.h"
 
 class ofApp : public ofBaseApp {
 
