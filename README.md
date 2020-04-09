@@ -6,7 +6,7 @@ An OpenBCI project easily understood by users to analyze brain parts with an EEG
 
 ## Authors and contributors
 
-Author : COLLART Quentin
+Author : COLLART Quentin, PEREZ-LACOSTE Mallaury, MANTUILA Herlyne, LETHU Florian
 
 Contributors : -
 
