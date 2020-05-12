@@ -67,7 +67,6 @@ class ofApp : public ofBaseApp {
 		vector<float> brain_areas{0, 0, 0, 0, 0, 0, 0, 0}; //Brain areas
 		vector<vector<float>> current_data_brut; //Brut datas (input)
 		vector<vector<float>> current_data; //Calculated with an FFT (output)
-
 		vector<vector<vector<float>>> datas_to_print; //To store NB_DATA current_data tab
 
 		float temps;
