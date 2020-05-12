@@ -1,5 +1,5 @@
 # Syn'Sitive PST3
-An OpenBCI project easily understanding by non-technical users to analyze brain activated zones with an EEG.
+An OpenBCI project easily understanding by non-technical users to analyze activated brain zones with an EEG.
 
 
 ## Desktop App
