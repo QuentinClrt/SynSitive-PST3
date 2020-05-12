@@ -5,8 +5,15 @@
  *
  */
 
-
 #include "ofApp.h"
+
+
+//To get a final record file of the session (created for each session and can be appended when you want to)
+time_t now = time(0);
+const char *dt = ctime(&now);
+string date_add(dt);
+string const nom_rec_file("./data/records/record_" + date_add + ".txt");
+ofstream rec_file(nom_rec_file.c_str());
 
 
 //--------------------------------------------------------------
@@ -36,17 +43,19 @@ void ofApp::setup(){
 	axe_v_hz.load("./pictures/axe_v_hz.png");
 	more_less.load("./pictures/more_less.png");
 	electrode.load("./pictures/electrode.png");
+	rec.load("./pictures/rec.png");
+	stop_rec.load("./pictures/stop-rec.png");
+	folder.load("./pictures/folder.png");
 
 	//Fonts
 	agressive_font.load("./fonts/Minecraft.ttf", 15);
 	main_font.load("./fonts/BebasNeue.ttf", 12);
 	main_font_bigger.load("./fonts/BebasNeue.ttf", 14);
 
-	nb_echant = NB_SAMPLES;
-
-	m_analyse.init(CELLS, NB_SAMPLES, STEP, MIN_FREQ, MAX_FREQ);
-
 	/*
+	//
+	//	AVEC LE CASQUE
+	//
 	//Data frequency analysis setup
 	m_analyse.init(8, 256, 0.5, 0, 60);
 
@@ -89,49 +98,76 @@ void ofApp::update(){
 	freq_max = m_analyse.getMaxFrequence();
 	step = m_analyse.getPas();
 
+	nb_echant = (int)((freq_max - freq_min) / step);
+
+	m_analyse.setNbEchantillons(nb_echant);
+
 	if(temps >= STEP_TIME){
 
-		//On re-vérifie le nombre d'échantillons à calculer
-		nb_echant = (int)((freq_max - freq_min) / step);
-		if(nb_echant <= NB_SAMPLES){
-			m_analyse.setNbEchantillons(nb_echant);
-		}
-		else{
-			nb_echant = NB_SAMPLES;
-			m_analyse.setNbEchantillons(NB_SAMPLES);
-		}
-
-
+		//
+		//	AVEC le casque
+		//
+		//Acquisition des données tous les STEP_TIME d'intervalle 
 		//int a = analyse();
-
-		//Acquisition des données
 		//m_analyse.acquisitionDatas(m_serial);
 
-		//Application des fonctions d'analyse fréquentielle et récupération
-		m_analyse.analyseFrequentielle(); //FFT
+		//
+		//	SANS le casque
+		//
+		//Génération de sinusoidale
+		m_analyse.genSinuoT();
+		//Fenetrage
+		m_analyse.fenetrageDatas("rectangulaire");
+		//FFT
+		m_analyse.analyseFrequentielle();
+
 
 		//Récupération des données
 		current_data_brut = m_analyse.getDatasEntrantes();
 		current_data = m_analyse.getDatasAnalysees();
 
+		//Traitement de la sauvegarde sous forme de capture
+		if(current_data_brut.size() > 0){
+			if(record == 1){
+
+				if(rec_file.is_open())
+	  			{
+	  				rec_file << m_analyse.getNbCapteurs() << " " << step << " " << freq_min << " " << freq_max << endl;
+	  				rec_file << nb_echant << endl;
+
+	  				//Write values
+					for(short i=0; i < nb_echant; i++){
+						for(short j=0; j < m_analyse.getNbCapteurs(); j++){
+							rec_file << current_data_brut[j][i] << " ";
+						}
+						rec_file << endl;
+					}
+
+	  				rec_file << endl;
+	  			}
+			}
+		}
 		//Ajout dans ce qu'il faudra afficher
-		if(datas_to_print.size() < NB_DATA){
-			datas_to_print.push_back(current_data);
-		}
-		else{
-			datas_to_print.erase(datas_to_print.begin());	//TO VERIFY
-			datas_to_print.push_back(current_data);
-		}
+		if(current_data.size() > 0){
+			if(datas_to_print.size() < NB_DATA){
+				datas_to_print.push_back(current_data);
+			}
+			else{
+				datas_to_print.erase(datas_to_print.begin());	//TO VERIFY
+				datas_to_print.push_back(current_data);
+			}
+			
 
-		//Update brain area values and display outputs
-		for(short i=0; i < m_analyse.getNbCapteurs(); i++){
+			//Update brain area values and display outputs
+			for(short i=0; i < m_analyse.getNbCapteurs(); i++){
 
-			sum = 0.0;
+				sum = 0.0;
 
-			for(int j=0; j < m_analyse.getNbEchantillons(); j++)
-				sum += current_data[i][j];
+				for(int j=0; j < nb_echant; j++)
+					sum += current_data[i][j];
 
-			brain_areas[i] = (float)(sum/nb_echant)*255.0;
+				brain_areas[i] = (sum/nb_echant)*255.0;
+			}
 		}
 
 		temps = 0;
@@ -175,6 +211,13 @@ void ofApp::draw(){
 	logosynsitive.draw(5, -10, 150, 150);
 	buttonsave.draw(460, 35, 70, 70);
 	buttonscreenshot.draw(580, 35, 70, 70);
+	folder.draw(350, 35, 70, 70);
+	if(record == 0){
+		rec.draw(720, 35, 70, 70);
+	}
+	else if(record == 1){
+		stop_rec.draw(720, 35, 70, 70);
+	}
 	
 
 	//Signal type
@@ -327,10 +370,10 @@ void ofApp::draw(){
 	}
 
 	ofSetColor(255, 255, 255, 255);
-		//Brain areas
 
+	//Brain areas
 	for(short zone=0; zone < m_analyse.getNbCapteurs(); zone++){
-		ofSetColor(255, 0, 0, brain_areas[zone]);
+		ofSetColor(255, 0, 0, (int)brain_areas[zone]);
 		ofDrawCircle((ofGetWidth() * 3/5 + (ofGetWidth() * 1/20)) + (zone*(ofGetWidth() * 2/45)), 120 + (ofGetWidth() *3/11), (ofGetWidth() * 1/45));
 	}
 
@@ -364,20 +407,25 @@ void ofApp::keyPressed(int key){
 
 		if(current_data.size() > 0){
 
-			ofstream myfile ("./data/sample.csv");
+			time_t now2 = time(0);
+			const char *dt2 = ctime(&now2);
+			string date_add2(dt2);
+			string const nom_sample_file2("./data/samples/sample_" + date_add2 + ".csv");
 
-			if (myfile.is_open())
+			ofstream sample_file(nom_sample_file2.c_str());
+
+			if (sample_file.is_open())
 	  		{
-				myfile << "Frequency, Analyse ->, Output 1, Output 2, Output 3, Output 4, Output 5, Output 6, Output 7, Output8, Brut ->, Output1, Output 2, Output 3, Output 4, Output 5, Output 6, Output 7, Output8" << endl;
+				sample_file << "Frequency, Analyse ->, Output 1, Output 2, Output 3, Output 4, Output 5, Output 6, Output 7, Output8" << endl;
 					
 				for(short j=0; j < nb_echant; j++){
-					myfile << freq_min << " Hz, ," << current_data[0][j] << ", " << current_data[1][j] << ", " << current_data[2][j] << ", " << current_data[3][j] << ", " << current_data[4][j] << ", " << current_data[5][j] << ", "<< current_data[6][j] << ", "<< current_data[7][j] << ", ," << current_data_brut[0][j]  << ", " <<  current_data_brut[1][j]  << ", " << current_data_brut[2][j] << ", " << current_data_brut[3][j] << ", " << current_data_brut[4][j] << ", " << current_data_brut[5][j] << ", " << current_data_brut[6][j] << ", " << current_data_brut[7][j] << endl;
+					sample_file << freq_min << " Hz, ," << current_data[0][j] << ", " << current_data[1][j] << ", " << current_data[2][j] << ", " << current_data[3][j] << ", " << current_data[4][j] << ", " << current_data[5][j] << ", "<< current_data[6][j] << ", "<< current_data[7][j] << endl;
 					freq_min += step;
 				}
 
 				freq_min = m_analyse.getMinFrequence();
 
-				myfile.close();
+				sample_file.close();
 
 				ofSystemAlertDialog("Sample saved into the 'sample.csv' file.");
 			}
@@ -413,7 +461,12 @@ void ofApp::keyPressed(int key){
 		}
 		pclose(fp);
     }
-
+    else if(key == 'o'){
+		auto result  = ofSystemLoadDialog();
+		if(result.bSuccess){
+			cout << result.getPath() << endl;
+		}
+    }
 }
 
 //--------------------------------------------------------------
@@ -459,25 +512,37 @@ void ofApp::mousePressed(int x, int y, int button){
 
 		//Save and screenshot buttons
 		if((35 <= y)&&(y <= 105)){
+			//Open
+			if((350 <= x)&&(x<=420)){
+				auto result  = ofSystemLoadDialog();
+				if(result.bSuccess){
+					cout << result.getPath() << endl;
+				}
+			}
 			//Into file
 			if((460 <= x)&&(x <= 530)){
 
 				if(current_data.size() > 0){
 
-					ofstream myfile ("./data/sample.csv");
+					time_t now2 = time(0);
+					const char *dt2 = ctime(&now2);
+					string date_add2(dt2);
+					string const nom_sample_file2("./data/samples/sample_" + date_add2 + ".csv");
 
-					if (myfile.is_open())
+					ofstream sample_file(nom_sample_file2.c_str());
+
+					if (sample_file.is_open())
 			  		{
-						myfile << "Frequency, Analyse ->, Output 1, Output 2, Output 3, Output 4, Output 5, Output 6, Output 7, Output8, Brut ->, Output1, Output 2, Output 3, Output 4, Output 5, Output 6, Output 7, Output8" << endl;
+						sample_file << "Frequency, Analyse ->, Output 1, Output 2, Output 3, Output 4, Output 5, Output 6, Output 7, Output8" << endl;
 							
 						for(short j=0; j < nb_echant; j++){
-							myfile << freq_min << " Hz, ," << current_data[0][j] << ", " << current_data[1][j] << ", " << current_data[2][j] << ", " << current_data[3][j] << ", " << current_data[4][j] << ", " << current_data[5][j] << ", "<< current_data[6][j] << ", "<< current_data[7][j] << ", ," << current_data_brut[0][j]  << ", " <<  current_data_brut[1][j]  << ", " << current_data_brut[2][j] << ", " << current_data_brut[3][j] << ", " << current_data_brut[4][j] << ", " << current_data_brut[5][j] << ", " << current_data_brut[6][j] << ", " << current_data_brut[7][j] << endl;
+							sample_file << freq_min << " Hz, ," << current_data[0][j] << ", " << current_data[1][j] << ", " << current_data[2][j] << ", " << current_data[3][j] << ", " << current_data[4][j] << ", " << current_data[5][j] << ", "<< current_data[6][j] << ", "<< current_data[7][j] << endl;
 							freq_min += step;
 						}
 
 						freq_min = m_analyse.getMinFrequence();
 
-						myfile.close();
+						sample_file.close();
 
 						ofSystemAlertDialog("Sample saved into the 'sample.csv' file.");
 					}
@@ -511,6 +576,12 @@ void ofApp::mousePressed(int x, int y, int button){
 					}
 				}
 				pclose(fp);
+			}
+			if((720 <= x)&&(x<= 790)&&(record == 0)){
+				record = 1;
+			}
+			else if((720 <= x)&&(x<= 790)&&(record == 1)){
+				record = 0;
 			}
 		}
 
