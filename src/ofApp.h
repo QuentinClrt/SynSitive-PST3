@@ -7,16 +7,8 @@
  *
  */
 
-
-#include <vector>
-#include <string>
-#include <iostream>
-#include <math.h>
-#include <fstream>
-#include <time.h>
-
+#include "CAnalyse.h"
 #include "ofMain.h"
-#include "analyse.h"
 #include "server/server.h"
 
 class ofApp : public ofBaseApp {
@@ -62,6 +54,9 @@ class ofApp : public ofBaseApp {
 		ofImage axe_v_hz;
 		ofImage more_less;
 		ofImage electrode;
+		ofImage rec;
+		ofImage stop_rec;
+		ofImage folder;
 
 		float freq_min;
 		float freq_max;
@@ -69,7 +64,7 @@ class ofApp : public ofBaseApp {
 		int nb_echant;
 
 		char signal_type = 1; //1 : Hz/t et 2 : V/Hz
-		vector<float> brain_areas{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; //Brain areas
+		vector<float> brain_areas{0, 0, 0, 0, 0, 0, 0, 0}; //Brain areas
 		vector<vector<float>> current_data_brut; //Brut datas (input)
 		vector<vector<float>> current_data; //Calculated with an FFT (output)
 
@@ -77,4 +72,6 @@ class ofApp : public ofBaseApp {
 
 		float temps;
 		clock_t t1, t2;
+
+		short record = 0;
 };
