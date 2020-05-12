@@ -8,14 +8,14 @@
 //===========================================================================================
 //*
 //*		@mainpage	Synsitive project (compatible with Linux and Windows)
-//*		An OpenBCI project easily understood by users to analyze brain parts with an EEG.
+//*		An OpenBCI project easily understanding by non-technical users to analyze brain parts with an EEG.
 //*
 //*		@file main.cpp
 //*
 //*		@author	COLLART Quentin, PEREZ-LACOSTE Mallaury, MANTUILA Herlyne, LETHU Florian
 //*
 //*		Creation date : 23-02-2020
-//*		Last modification : 22-03-2020
+//*		Last modification : 12-05-2020
 //*
 //===========================================================================================
 
