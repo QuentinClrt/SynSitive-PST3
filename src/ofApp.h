@@ -57,6 +57,7 @@ class ofApp : public ofBaseApp {
 		ofImage rec;
 		ofImage stop_rec;
 		ofImage folder;
+		ofImage record_display;
 
 		float freq_min;
 		float freq_max;
@@ -67,10 +68,12 @@ class ofApp : public ofBaseApp {
 		vector<float> brain_areas{0, 0, 0, 0, 0, 0, 0, 0}; //Brain areas
 		vector<vector<float>> current_data_brut; //Brut datas (input)
 		vector<vector<float>> current_data; //Calculated with an FFT (output)
+
 		vector<vector<vector<float>>> datas_to_print; //To store NB_DATA current_data tab
 
 		float temps;
 		clock_t t1, t2;
 
 		short record = 0;
+		short record_view = 0;
 };
