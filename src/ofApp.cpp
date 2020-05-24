@@ -416,7 +416,7 @@ void ofApp::keyPressed(int key){
 	//Open a new VLC window displaying the little test movie
 	if(key == 't'){
 		#ifdef __linux__
-			if(system("vlc ./data/movies/test_movie.mp4 --play-and-exit &")){
+			if(system("vlc ./data/movies/test_movie.mp4 --play-and-exit 2>/dev/null &")){
 				printf("VLC Error while loading the test movie.\n");
 			}
 		#elif _WIN32
@@ -540,7 +540,7 @@ void ofApp::mousePressed(int x, int y, int button){
 		if((x >= ofGetWidth()-170)&&(y >= 20)){
 			if((x <= ofGetWidth()-20)&&(y <= 60)){
 			#ifdef __linux__
-				if(system("vlc ./data/movies/test_movie.mp4 --play-and-exit &")){
+				if(system("vlc ./data/movies/test_movie.mp4 --play-and-exit 2>/dev/null &")){
 					printf("VLC Error while loading the test movie.\n");
 				}
 			#elif _WIN32
