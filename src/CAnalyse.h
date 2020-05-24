@@ -1,26 +1,24 @@
 //Windows OS includes
 #ifdef _WIN32
-#include <vector>
-#include <string>
-#include <iostream>
-#include <math.h>
-#include <complex>
-#include <fstream>
-#include <time.h>
-#include <chrono>
-#include <ctime>
+	#include <vector>
+	#include <string>
+	#include <iostream>
+	#include <complex>
+	#include <fstream>
+	#include <chrono>
+	#include <ctime>
+	#include <math.h>
 
 //Else, Linux OS includes
 #else
-#include <vector>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <math.h>
-#include <complex>
-#include <chrono>
-#include <ctime>
-#include <time.h>
+	#include <vector>
+	#include <string>
+	#include <iostream>
+	#include <fstream>
+	#include <complex>
+	#include <chrono>
+	#include <ctime>
+	#include <math.h>
 #endif
 
 using namespace std;
@@ -36,7 +34,7 @@ using namespace std;
 
 #define STEP_TIME 0.4
 #define T_MAX 4.0
-#define T_MIN 0.05
+#define T_MIN 0.1
 #define NB_DATA (int)(T_MAX / STEP_TIME)
 
 
