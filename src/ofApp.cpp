@@ -15,6 +15,8 @@ string date_add(dt);
 string const nom_rec_file("./data/records/record_" + date_add + ".txt");
 ofstream rec_file(nom_rec_file.c_str());
 
+ifstream record_to_display;
+
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -46,6 +48,7 @@ void ofApp::setup(){
 	rec.load("./pictures/rec.png");
 	stop_rec.load("./pictures/stop-rec.png");
 	folder.load("./pictures/folder.png");
+	record_display.load("./pictures/record-view.png");
 
 	//Fonts
 	agressive_font.load("./fonts/Minecraft.ttf", 15);
@@ -54,13 +57,13 @@ void ofApp::setup(){
 
 	/*
 	//
-	//	AVEC LE CASQUE
+	//	WITH the BCI
 	//
 	//Data frequency analysis setup
 	m_analyse.init(8, 256, 0.5, 0, 60);
 
 
-	//ouverture du port serie ok
+	//Serial port opened
 	#ifdef _WIN32								//tty(S31/x) Linux or COM(17/x) Windows
 		if (!(m_serial.setup("COM17", 115200)))
 	#else
@@ -93,61 +96,82 @@ void ofApp::update(){
 
 	t1 = clock();
 
-	//Update values
-	freq_min = m_analyse.getMinFrequence();
-	freq_max = m_analyse.getMaxFrequence();
-	step = m_analyse.getPas();
-
-	nb_echant = (int)((freq_max - freq_min) / step);
-
-	m_analyse.setNbEchantillons(nb_echant);
-
 	if(temps >= STEP_TIME){
 
-		//
-		//	AVEC le casque
-		//
-		//Acquisition des données tous les STEP_TIME d'intervalle 
-		//int a = analyse();
-		//m_analyse.acquisitionDatas(m_serial);
+		//Update values
+		freq_min = m_analyse.getMinFrequence();
+		freq_max = m_analyse.getMaxFrequence();
+		step = m_analyse.getPas();
 
-		//
-		//	SANS le casque
-		//
-		//Génération de sinusoidale
-		m_analyse.genSinuoT();
-		//Fenetrage
+		if(record_view){
+			if(record_to_display.is_open() && !record_to_display.eof()){
+
+				vector<vector<float>> current_data_record(CELLS, vector<float> (nb_echant, 0));
+
+				int nb_echant;
+				record_to_display >> nb_echant;
+				m_analyse.setNbEchantillons(nb_echant);
+
+				for(int j=0; j < nb_echant; j++)
+					record_to_display >> current_data_record[0][j] >> current_data_record[1][j] >> current_data_record[2][j] >> current_data_record[3][j] >> current_data_record[4][j] >> current_data_record[5][j] >> current_data_record[6][j] >> current_data_record[7][j];
+
+				m_analyse.setDatasEntrantes(current_data_record);
+			}
+			else{
+				record_view = 0;
+				record_to_display.close();
+			}
+		}
+		else {
+			nb_echant = (int)((freq_max - freq_min) / step);
+			m_analyse.setNbEchantillons(nb_echant);
+
+			//========================================================
+			//
+			//	WITH the BCI
+			//
+			//Getting datas each STEP_TIME
+			//int a = analyse();
+			//m_analyse.acquisitionDatas(m_serial);
+
+			//
+			//	WITHOUT the BCI
+			//
+			//Sinusoidal as an input
+			m_analyse.genSinuoT();
+			//=========================================================
+		}
+
+		//Windowing
 		m_analyse.fenetrageDatas("rectangulaire");
 		//FFT
 		m_analyse.analyseFrequentielle();
 
-
-		//Récupération des données
 		current_data_brut = m_analyse.getDatasEntrantes();
 		current_data = m_analyse.getDatasAnalysees();
 
-		//Traitement de la sauvegarde sous forme de capture
+		//Save the current data into a record file
 		if(current_data_brut.size() > 0){
 			if(record == 1){
 
 				if(rec_file.is_open())
 	  			{
-	  				rec_file << m_analyse.getNbCapteurs() << " " << step << " " << freq_min << " " << freq_max << endl;
 	  				rec_file << nb_echant << endl;
 
 	  				//Write values
 					for(short i=0; i < nb_echant; i++){
-						for(short j=0; j < m_analyse.getNbCapteurs(); j++){
-							rec_file << current_data_brut[j][i] << " ";
+						for(short j=0; j < CELLS; j++){
+							if(j != CELLS-1)
+								rec_file << current_data_brut[j][i] << " ";
+							else
+								rec_file << current_data_brut[j][i];
 						}
 						rec_file << endl;
 					}
-
-	  				rec_file << endl;
 	  			}
 			}
 		}
-		//Ajout dans ce qu'il faudra afficher
+		//Adding current value into the print queue
 		if(current_data.size() > 0){
 			if(datas_to_print.size() < NB_DATA){
 				datas_to_print.push_back(current_data);
@@ -204,6 +228,9 @@ void ofApp::draw(){
 	ofDrawRectangle(10, 155, ofGetWidth() * 3/5, ofGetHeight() - 164);
 	ofSetColor(200, 200, 200, 255);
 	ofDrawRectangle(16, 162, (ofGetWidth() * 3/5) - 12, ofGetHeight() - 176);
+
+	if(record_view)
+		record_display.draw((ofGetWidth() * 3/5)+15, 155, 30, 30);
 
 		//Draw pictures
 	ofSetColor(255, 255, 255, 255);
@@ -263,28 +290,27 @@ void ofApp::draw(){
 	char minStr[40];
 	sprintf(minStr, "- Min : %.1f Hz", m_analyse.getMinFrequence());
 	main_font_bigger.drawString(minStr, 180, 142);
-	more_less.draw(280, 122, 30, 30);
 
 	//Max freq
 	char maxStr[40];
 	sprintf(maxStr, "- Max : %.1f Hz", m_analyse.getMaxFrequence());
 	main_font_bigger.drawString(maxStr, 320, 142);
-	more_less.draw(430, 122, 30, 30);
-
 
 	//Step
 	char stepStr[40];
 	sprintf(stepStr, "- Step :   %.1f", m_analyse.getPas());
 	main_font_bigger.drawString(stepStr, 470, 142);
-	more_less.draw(575, 122, 30, 30);
 
 	//Cells
 	electrode.draw(650, 122, 30, 30);
 	char cellsStr[20];
 	sprintf(cellsStr, "%d", m_analyse.getNbCapteurs());
 	main_font_bigger.drawString(cellsStr, 695, 142);
-	more_less.draw(725, 122, 30, 30);
 
+	more_less.draw(280, 122, 30, 30);
+	more_less.draw(430, 122, 30, 30);
+	more_less.draw(575, 122, 30, 30);
+	more_less.draw(725, 122, 30, 30);
 
 
 		//Button's hitboxes
@@ -315,11 +341,11 @@ void ofApp::draw(){
 	}
 
 		//Temporal signal
-	if((current_data.size() > 0) && (datas_to_print.size() == NB_DATA) && (signal_type == 1)){
+	if((current_data.size() > 0)  && (signal_type == 1)){
 
 		float counter_to_print = T_MIN;
 
-		for(short c=0; c < NB_DATA; c++){
+		for(short c=0; c < datas_to_print.size(); c++){
 
 			for(short i=0; i < m_analyse.getNbCapteurs(); i++){
 
@@ -394,7 +420,7 @@ void ofApp::keyPressed(int key){
 				printf("VLC Error while loading the test movie.\n");
 			}
 		#elif _WIN32
-			if(system("vlc ./data/movies/test_movie.mp4 --vlc://quit &")){
+			if(system("\"C:\\Program Files\\VideoLAN\\VLC\vlc.exe\" file:///data/movies/test_movie.mp4 vlc://quit -f")){
 				printf("VLC Error while loading the test movie.\n");
 			}
 		#else
@@ -419,7 +445,12 @@ void ofApp::keyPressed(int key){
 				sample_file << "Frequency, Analyse ->, Output 1, Output 2, Output 3, Output 4, Output 5, Output 6, Output 7, Output8" << endl;
 					
 				for(short j=0; j < nb_echant; j++){
-					sample_file << freq_min << " Hz, ," << current_data[0][j] << ", " << current_data[1][j] << ", " << current_data[2][j] << ", " << current_data[3][j] << ", " << current_data[4][j] << ", " << current_data[5][j] << ", "<< current_data[6][j] << ", "<< current_data[7][j] << endl;
+					sample_file << freq_min << " Hz, ,";
+
+					for(int i=0; i < m_analyse.getNbCapteurs(); i++)
+						sample_file << current_data[i][j] << ",";
+
+					sample_file << endl;
 					freq_min += step;
 				}
 
@@ -427,9 +458,9 @@ void ofApp::keyPressed(int key){
 
 				sample_file.close();
 
-				ofSystemAlertDialog("Sample saved into the 'sample.csv' file.");
+				ofSystemAlertDialog("Sample saved into the samples folder.");
 			}
-			else cout << "Can't open 'sample.csv'.";
+			else cout << "Can't open the sample file.";
 		}
 	}
 
@@ -438,7 +469,11 @@ void ofApp::keyPressed(int key){
 		FILE *fp;
 		char path[30];
 
-		fp = popen("date +\'%d%m%y_%k%M%S\'", "r");
+		#ifdef _WIN32
+			fp = fopen("date +\'%d%m%y_%k%M%S\'", "r");
+		#else
+			fp = popen("date +\'%d%m%y_%k%M%S\'", "r");
+		#endif
 
 		if (fp == NULL) {
 			printf("Erreur lors de la récupération de la date.\n" );
@@ -464,7 +499,15 @@ void ofApp::keyPressed(int key){
     else if(key == 'o'){
 		auto result  = ofSystemLoadDialog();
 		if(result.bSuccess){
-			cout << result.getPath() << endl;
+			record_to_display.open(result.getPath());
+
+			if(record_to_display.is_open()){
+				cout << "Fichier de record '" << result.getPath() << "' lancé." << endl;
+				record_view = 1;
+			}
+			else{
+				cout << "Impossible de lancer le record. Fichier en utilisation ?" << endl;
+			}
 		}
     }
 }
@@ -501,7 +544,7 @@ void ofApp::mousePressed(int x, int y, int button){
 					printf("VLC Error while loading the test movie.\n");
 				}
 			#elif _WIN32
-				if(system("vlc ./data/movies/test_movie.mp4 --vlc://quit &"));
+				if(system("\"C:\\Program Files\\VideoLAN\\VLC\vlc.exe\" file:///data/movies/test_movie.mp4 vlc://quit -f"));
 					printf("VLC Error while loading the test movie.\n");
 				}
 			#else
@@ -516,7 +559,15 @@ void ofApp::mousePressed(int x, int y, int button){
 			if((350 <= x)&&(x<=420)){
 				auto result  = ofSystemLoadDialog();
 				if(result.bSuccess){
-					cout << result.getPath() << endl;
+					record_to_display.open(result.getPath());
+
+					if(record_to_display.is_open()){
+						cout << "Fichier de record '" << result.getPath() << "' lancé." << endl;
+						record_view = 1;
+					}
+					else{
+						cout << "Impossible de lancer le record. Fichier en utilisation ?" << endl;
+					}
 				}
 			}
 			//Into file
@@ -536,7 +587,12 @@ void ofApp::mousePressed(int x, int y, int button){
 						sample_file << "Frequency, Analyse ->, Output 1, Output 2, Output 3, Output 4, Output 5, Output 6, Output 7, Output8" << endl;
 							
 						for(short j=0; j < nb_echant; j++){
-							sample_file << freq_min << " Hz, ," << current_data[0][j] << ", " << current_data[1][j] << ", " << current_data[2][j] << ", " << current_data[3][j] << ", " << current_data[4][j] << ", " << current_data[5][j] << ", "<< current_data[6][j] << ", "<< current_data[7][j] << endl;
+							sample_file << freq_min << " Hz, ,";
+
+							for(int i=0; i < m_analyse.getNbCapteurs(); i++)
+								sample_file << current_data[i][j] << ",";
+
+							sample_file << endl;
 							freq_min += step;
 						}
 
@@ -544,9 +600,9 @@ void ofApp::mousePressed(int x, int y, int button){
 
 						sample_file.close();
 
-						ofSystemAlertDialog("Sample saved into the 'sample.csv' file.");
+						ofSystemAlertDialog("Sample saved into the samples folder.");
 					}
-					else cout << "Can't open 'sample.csv'.";
+					else cout << "Can't open the file.";
 				}
 			}
 			//As a screenshot
@@ -554,7 +610,11 @@ void ofApp::mousePressed(int x, int y, int button){
 				FILE *fp;
 				char path[30];
 
-				fp = popen("date +\'%d%m%y_%k%M%S\'", "r");
+				#ifdef _WIN32
+					fp = fopen("date +\'%d%m%y_%k%M%S\'", "r");
+				#else
+					fp = popen("date +\'%d%m%y_%k%M%S\'", "r");
+				#endif
 
 				if (fp == NULL) {
 					printf("\nCan't get the current date. OS or syntax problem ?" );
@@ -585,7 +645,6 @@ void ofApp::mousePressed(int x, int y, int button){
 			}
 		}
 
-
 		if(y >= 121 && y <= 153){
 			//Change signal type
 			//1
@@ -596,56 +655,56 @@ void ofApp::mousePressed(int x, int y, int button){
 			if(x >= 149 && x <= 179){
 				signal_type = 2;
 			}
-			//Change min freq
-			if(x >= 279 && x <= 311){
-				if(y <= 136){
-					if(m_analyse.getMinFrequence() + m_analyse.getPas() < m_analyse.getMaxFrequence())
-					m_analyse.setMinFrequence(m_analyse.getMinFrequence() + m_analyse.getPas());
-				}
-				else{
-					if(m_analyse.getMinFrequence() - m_analyse.getPas() >= 0.0){
-						m_analyse.setMinFrequence(m_analyse.getMinFrequence() - m_analyse.getPas());
-					}
-				}
-			}
-			//Change max freq
-			if(x >= 429 && x <= 461){
-				if(y <= 136){
-					m_analyse.setMaxFrequence(m_analyse.getMaxFrequence() + m_analyse.getPas());
-				}
-				else{
-					if(m_analyse.getMaxFrequence() - m_analyse.getPas() > m_analyse.getMinFrequence()){
-						m_analyse.setMaxFrequence(m_analyse.getMaxFrequence() - m_analyse.getPas());
-					}
-				}
-			}
-			//Change step
-			if(x >= 574 && x <= 606){
-				if(y <= 136){
-					m_analyse.setPas(m_analyse.getPas() + 0.1);
-				}
-				else{
-					if(m_analyse.getPas() >= 0.2){
-						m_analyse.setPas(m_analyse.getPas() - 0.1);
+				//Change min freq
+				if(x >= 279 && x <= 311){
+					if(y <= 136){
+						if(m_analyse.getMinFrequence() + m_analyse.getPas() < m_analyse.getMaxFrequence())
+						m_analyse.setMinFrequence(m_analyse.getMinFrequence() + m_analyse.getPas());
 					}
 					else{
-						m_analyse.setPas(0.1);
+						if(m_analyse.getMinFrequence() - m_analyse.getPas() >= 0.0){
+							m_analyse.setMinFrequence(m_analyse.getMinFrequence() - m_analyse.getPas());
+						}
 					}
 				}
-			}
-			//Change cells number
-			if(x >= 724 && x <= 756){
-				if(y <= 136){
-					if(m_analyse.getNbCapteurs() < 8){
-						m_analyse.setNbCapteurs(m_analyse.getNbCapteurs() + 1);
+				//Change max freq
+				if(x >= 429 && x <= 461){
+					if(y <= 136){
+						m_analyse.setMaxFrequence(m_analyse.getMaxFrequence() + m_analyse.getPas());
+					}
+					else{
+						if(m_analyse.getMaxFrequence() - m_analyse.getPas() > m_analyse.getMinFrequence()){
+							m_analyse.setMaxFrequence(m_analyse.getMaxFrequence() - m_analyse.getPas());
+						}
 					}
 				}
-				else{
-					if(m_analyse.getNbCapteurs() > 0){
-						m_analyse.setNbCapteurs(m_analyse.getNbCapteurs() - 1);
+				//Change step
+				if(x >= 574 && x <= 606){
+					if(y <= 136){
+						m_analyse.setPas(m_analyse.getPas() + 0.1);
+					}
+					else{
+						if(m_analyse.getPas() >= 0.2){
+							m_analyse.setPas(m_analyse.getPas() - 0.1);
+						}
+						else{
+							m_analyse.setPas(0.1);
+						}
 					}
 				}
-			}
+				//Change cells number
+				if(x >= 724 && x <= 756){
+					if(y <= 136){
+						if(m_analyse.getNbCapteurs() < 8){
+							m_analyse.setNbCapteurs(m_analyse.getNbCapteurs() + 1);
+						}
+					}
+					else{
+						if(m_analyse.getNbCapteurs() > 0){
+							m_analyse.setNbCapteurs(m_analyse.getNbCapteurs() - 1);
+						}
+					}
+				}
 		}
 	}
 }
