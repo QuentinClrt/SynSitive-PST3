@@ -420,7 +420,7 @@ void ofApp::keyPressed(int key){
 				printf("VLC Error while loading the test movie.\n");
 			}
 		#elif _WIN32
-			if(system("\"C:\\Program Files\\VideoLAN\\VLC\vlc.exe\" file:///data/movies/test_movie.mp4 vlc://quit -f")){
+			if(system("\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" file:///data/movies/test_movie.mp4 vlc://quit -f")){
 				printf("VLC Error while loading the test movie.\n");
 			}
 		#else
@@ -544,7 +544,7 @@ void ofApp::mousePressed(int x, int y, int button){
 					printf("VLC Error while loading the test movie.\n");
 				}
 			#elif _WIN32
-				if(system("\"C:\\Program Files\\VideoLAN\\VLC\vlc.exe\" file:///data/movies/test_movie.mp4 vlc://quit -f"));
+				if(system("\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" file:///data/movies/test_movie.mp4 vlc://quit -f"));
 					printf("VLC Error while loading the test movie.\n");
 				}
 			#else
