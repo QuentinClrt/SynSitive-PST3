@@ -1,10 +1,10 @@
 # Syn'Sitive PST3
 An OpenBCI project easily understanding by non-technical users to analyze activated brain zones with an EEG.
 
+## Desktop App
 
 ![alt text](https://github.com/QuentinClrt/SynSitive-PST3/blob/master/bin/data/screenshots/screenshot_150620_185850.png)
 
-## Desktop App
 
 ## Authors and contributors
 
