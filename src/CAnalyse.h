@@ -8,7 +8,7 @@
 	#include <chrono>
 	#include <ctime>
 	#include <math.h>
-
+	#include "ofSerial.h"
 //Else, Linux OS includes
 #else
 	#include <vector>
@@ -37,7 +37,7 @@ using namespace std;
 #define T_MIN 0.1
 #define NB_DATA (int)(T_MAX / STEP_TIME)
 
-
+typedef unsigned char Byte;
 class CAnalyse
 {
 	//Membres
@@ -45,6 +45,7 @@ protected:
 	vector<vector<float>> m_datasEntrantes;
 	vector<vector<float>> m_datasFenetrees;
 	vector<vector<float>> m_datasAnalysees;
+	
 
 	int m_nbCapteurs;
 	int m_nbEchantillons;
@@ -52,7 +53,7 @@ protected:
 	float m_minFrequence;
 	float m_maxFrequence;
 
-	//MÃ©thodes
+	//Méthodes
 public:
 	CAnalyse();
 	CAnalyse(int nbCapteurs, int nbEchantillons, float pas, float minFrequence, float maxFrequence);
@@ -67,6 +68,7 @@ public:
 	float getPas();
 	float getMinFrequence();
 	float getMaxFrequence();
+	int m_dataRecState;
 
 	//Setters
 	void setDatasEntrantes(vector<vector<float>> tableau);
@@ -78,8 +80,8 @@ public:
 	void setMinFrequence(float minFrequence);
 	void setMaxFrequence(float maxFrequence);
 
-	//Acquisition des donnÃ©es
-	void acquisitionDatas();
+	//Acquisition des données
+	//void acquisitionDatas(ofSerial& p_serial);
 	//Fonctions de fenetrage
 	void fenetrageDatas(string modeFenetrage);
 	void rectangulaire();
@@ -92,10 +94,10 @@ public:
 	void analyseFrequentielle();
 	void fft(float frequence, int capteur);
 
-	//MÃ©thode gÃ©nÃ©rale d'appel
+	//Méthode générale d'appel
 	void general(string fenetrage);
 
-	//Fonction de gÃ©nÃ©rations de sinuosidales
+	//Fonction de générations de sinuosidales
 	//Elle s'utilise en remplacement de la fonction acquisitionDatas()
 	void genSinuo();
 	void genSinuoT();

@@ -108,7 +108,6 @@ void ofApp::update(){
 
 				vector<vector<float>> current_data_record(CELLS, vector<float> (nb_echant, 0));
 
-				int nb_echant;
 				record_to_display >> nb_echant;
 				m_analyse.setNbEchantillons(nb_echant);
 
@@ -143,9 +142,11 @@ void ofApp::update(){
 		}
 
 		//Windowing
-		m_analyse.fenetrageDatas("rectangulaire");
+		//m_analyse.fenetrageDatas("rectangulaire");
 		//FFT
-		m_analyse.analyseFrequentielle();
+		//m_analyse.analyseFrequentielle();
+		//Windowing and FFT
+		m_analyse.general("rectangulaire");
 
 		current_data_brut = m_analyse.getDatasEntrantes();
 		current_data = m_analyse.getDatasAnalysees();
@@ -159,7 +160,7 @@ void ofApp::update(){
 	  				rec_file << nb_echant << endl;
 
 	  				//Write values
-					for(short i=0; i < nb_echant; i++){
+					for(int i=0; i < nb_echant; i++){
 						for(short j=0; j < CELLS; j++){
 							if(j != CELLS-1)
 								rec_file << current_data_brut[j][i] << " ";
@@ -420,9 +421,8 @@ void ofApp::keyPressed(int key){
 				printf("VLC Error while loading the test movie.\n");
 			}
 		#elif _WIN32
-			if(system("\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" file:///data/movies/test_movie.mp4 vlc://quit -f")){
-				printf("VLC Error while loading the test movie.\n");
-			}
+			_chdir("C:\\Program Files (x86)\\VideoLAN\\VLC");
+			system(".\\data\\movies\\test_movie.mp4");
 		#else
 			printf("Can't load the test movie on an unknown OS.\n");
 		#endif
@@ -544,9 +544,8 @@ void ofApp::mousePressed(int x, int y, int button){
 					printf("VLC Error while loading the test movie.\n");
 				}
 			#elif _WIN32
-				if(system("\"C:\\Program Files\\VideoLAN\\VLC\\vlc.exe\" file:///data/movies/test_movie.mp4 vlc://quit -f"));
-					printf("VLC Error while loading the test movie.\n");
-				}
+				_chdir("C:\\Program Files (x86)\\VideoLAN\\VLC");
+				system(".\\data\\movies\\test_movie.mp4");
 			#else
 				printf("Can't load the test movie on an unknown OS.\n");
 			#endif
