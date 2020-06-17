@@ -106,10 +106,10 @@ void ofApp::update(){
 		if(record_view){
 			if(record_to_display.is_open() && !record_to_display.eof()){
 
-				vector<vector<float>> current_data_record(CELLS, vector<float> (nb_echant, 0));
-
 				record_to_display >> nb_echant;
 				m_analyse.setNbEchantillons(nb_echant);
+
+				vector<vector<float>> current_data_record(CELLS, vector<float> (nb_echant, 0));
 
 				for(int j=0; j < nb_echant; j++)
 					record_to_display >> current_data_record[0][j] >> current_data_record[1][j] >> current_data_record[2][j] >> current_data_record[3][j] >> current_data_record[4][j] >> current_data_record[5][j] >> current_data_record[6][j] >> current_data_record[7][j];
